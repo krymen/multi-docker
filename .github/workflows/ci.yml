@@ -1,0 +1,34 @@
+name: Continuous Integration
+
+on: [push]
+
+jobs:
+
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the Docker image
+      run: docker build -t kmenzyk/react-test -f ./client/Dockerfile.dev ./client
+    - name: Run tests
+      run: docker run -e CI=true kmenzyk/react-test npm run test
+    - name: Build client docker image
+      run: docker build -t kmenzyk/multi-client ./client
+    - name: Build nginx docker image
+      run: docker build -t kmenzyk/multi-nginx ./nginx
+    - name: Build server docker image
+      run: docker build -t kmenzyk/multi-server ./server
+    - name: Build worker docker image
+      run: docker build -t kmenzyk/multi-worker ./worker
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_ID }}" --password-stdin
+    - name: Push client docker image
+      run: docker push kmenzyk/multi-client
+    - name: Push nginx docker image
+      run: docker push kmenzyk/multi-nginx
+    - name: Push server docker image
+      run: docker push kmenzyk/multi-server
+    - name: Push worker docker image
+      run: docker push kmenzyk/multi-worker
